@@ -2,6 +2,8 @@ const express = require('express');
 const fs = require('fs/promises');
 const path = require('path');
 
+const {fileServices} = require('./services');
+
 const app = express();
 
 app.use(express.json());
@@ -12,9 +14,11 @@ app.listen(5000, () => {
 })
 
 app.get('/users', async (req, res) => {
-    const buffer = await fs.readFile(path.join(__dirname, 'dataBase', 'users.json'));
-    const users = JSON.parse(buffer.toString());
+    // const buffer = await fs.readFile(path.join(__dirname, 'dataBase', 'users.json'));
+    // const users = JSON.parse(buffer.toString());
+    const users = await fileServices.reader()
     res.json(users);
+
 });
 
 app.get('/users/:userId', async (req, res) => {
