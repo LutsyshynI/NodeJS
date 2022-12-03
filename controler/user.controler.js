@@ -2,69 +2,51 @@ const {fileServices} = require('../services');
 const fs = require("fs/promises");
 const path = require("path");
 
+const UserSchema = require('../dataBase/user')
+
 module.exports = {
-    getAllUsers: async (req, res) => {
-    // const buffer = await fs.readFile(path.join(__dirname, 'dataBase', 'users.json'));
-    // const users = JSON.parse(buffer.toString());
-    const users = await fileServices.reader()
-    res.json(users);
+    getAllUsers: async (req, res, next) => {
+        try {
+            const Users = await UserSchema.find({});
+
+            res.json(Users);
+        } catch (e) {
+            next(e)
+        }
     },
 
-    getUserById:async (req, res) => {
-        const {userId} = req.params;
-        const users = await fileServices.reader();
-        const user = users.find((u) => u.id === +userId);
+    getUserById: async (req, res, next) => {
+        try {
+            res.json(req.user);
 
-        // if (!user) {
-        //     return res.status(404).json(`User with id ${userId} not found`)
-        // }
-        res.json(user);
-    },
-    post: async (req, res) => {
-        const userInfo = req.body;
-
-        const users = await fileServices.reader();
-
-        const newUser = {...userInfo, id: users[users.length - 1].id + 1};
-        users.push(newUser)
-
-        await fileServices.writer(users);
-
-        res.status(201).json(newUser);
-    },
-    put: async (req, res) => {
-        const newUserInfo = req.body;
-        const {userId} = req.params;
-
-        const users = await fileServices.reader();
-
-        const index = users.findIndex((u) => u.id === +userId);
-        console.log(index);
-        if (index === -1) {
-            return res.status(404).json(`User with is ${userId} not found`);
+        } catch (e) {
+            next(e)
         }
 
-        users[index] = {...users[index], ...newUserInfo};
-        await fileServices.writer(users);
-
-        res.status(201).json(users[index]);
     },
-    delete: async (req, res) => {
+    put: async (req, res, next) => {
+        try {
+            const newUserInfo = req.body;
+            const userId = req.params.userId;
 
-        const {userId} = req.params;
-
-        const users = await fileServices.reader();
-
-        const index = users.findIndex((u) => u.id === +userId);
-        console.log(index);
-        if (index === -1) {
-            return res.status(404).json(`User with is ${userId} not found`);
+            await UserSchema.findByIdAndUpdate(userId, newUserInfo);
+            res.json('Updated')
+        } catch (e) {
+            next(e);
         }
-
-        users.splice(index, 1)
-        await fileServices.writer(users)
-
-        res.status(201).json('deleted');
+    },
+    post: async (req, res,next) => {
+        await UserSchema.create(req.body)
+        res.json('OK')
+    },
+    delete: async (req, res,next) => {
+ try{
+     await UserSchema.deleteOne({_id:req.params.userId});
+     res.status(204).send('OK')
+ } catch (e) {
+     next(e)
+ }
+        
     }
 
 }
