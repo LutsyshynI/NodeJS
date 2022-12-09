@@ -2,7 +2,7 @@ const UserSchema = require("../dataBase/user")
 const ApiError = require("../error/ApiError")
 
 module.exports = {
-    checkIsUserExist:async (req, res, next) => {
+    checkIsUserExist: async (req, res, next) => {
         try {
             const {userId} = req.params;
             // console.log(req.params);
@@ -10,7 +10,7 @@ module.exports = {
             const user = await UserSchema.findById(userId)
 
             if (!user) {
-              throw new ApiError(`User with id ${userId} not found`, 503);
+                throw new ApiError(`User with id ${userId} not found`, 503);
             }
             req.user = user;
             next()
@@ -20,17 +20,33 @@ module.exports = {
 
     },
 
-    checkIsEmailExist:async (req, res, next) => {
+    getUsersDynamically: (fieldName, from = 'body', dbField = fieldName) => async (req, res, next) => {
         try {
-            // const {email} = req.body;
-            console.log(req.body);
-            if(!email) {
-                throw new ApiError('Email is not present',400)
+            const fieldToSearch = req[from][fieldName];
+
+            const user = await UserSchema.findOne({[dbField]: fieldToSearch});
+
+            if(!user){
+                throw new ApiError('User  not found', 503);
+            }
+                req.user = user;
+            next()
+        } catch (e) {
+            next(e)
+        }
+    },
+
+    checkIsEmailExist: async (req, res, next) => {
+        try {
+            const {email} = req.body;
+            // console.log(req.body);
+            if (!email) {
+                throw new ApiError('Email is not present', 400)
             }
             const user = await UserSchema.findOne({email});
 
             if (user) {
-              throw new ApiError(`User with this email already exist`, 409);
+                throw new ApiError(`User with this email already exist`, 409);
             }
 
             next()
